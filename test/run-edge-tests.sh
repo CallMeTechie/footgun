@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Edge-case tests for js-review-scope.sh
 set -u
-SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/scripts/js-review-scope.sh"
+SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/plugin/scripts/js-review-scope.sh"
 
 # (a) fresh repo, NO commit (no HEAD), untracked new.js -> listed
 ta="$(mktemp -d)"

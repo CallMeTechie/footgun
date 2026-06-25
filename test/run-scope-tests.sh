@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Test harness for js-review-scope.sh (plain bash; bats not available)
 set -u
-SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/scripts/js-review-scope.sh"
+SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/plugin/scripts/js-review-scope.sh"
 fail() { echo "FAIL: $1"; exit 1; }
 
 # --- Test 1: extension filter + generated-file exclude ---

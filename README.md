@@ -30,22 +30,16 @@ reviewers run only if the code clears the gate.
 
 ## Install
 
-Clone into your Claude Code skills directory — it auto-loads from there:
+Add the marketplace, then install the plugin — from inside Claude Code:
 
-```bash
-git clone https://github.com/CallMeTechie/footgun ~/.claude/skills/footgun
+```
+/plugin marketplace add CallMeTechie/footgun
+/plugin install footgun@footgun
 ```
 
-Then load it (`/reload-plugins` inside Claude Code, or start a new session). The
-plugin loads as `footgun@skills-dir`. Verify with:
-
-```bash
-claude plugin validate ~/.claude/skills/footgun
-claude plugin details footgun
-```
-
-No build step, no runtime dependencies. ESLint / Prettier / `tsc` / `npm audit`
-are used only if your project already has them.
+That's it — `/footgun` is now available. No build step, no runtime
+dependencies. ESLint / Prettier / `tsc` / `npm audit` are used only if your
+project already has them.
 
 ## How it works
 
@@ -111,11 +105,11 @@ The deterministic core is a plain Bash script you can use on its own:
 
 ```bash
 # list the JS files that would be reviewed (NUL-separated)
-scripts/js-review-scope.sh --list [--include-generated] [path…]
+plugin/scripts/js-review-scope.sh --list [--include-generated] [path…]
 
 # annotate a file with absolute line numbers + change markers
-scripts/js-review-scope.sh --annotate <file>
-scripts/js-review-scope.sh --annotate --whole-file <file>
+plugin/scripts/js-review-scope.sh --annotate <file>
+plugin/scripts/js-review-scope.sh --annotate --whole-file <file>
 ```
 
 Exit codes: `0` ok, `3` nothing to review / no such file, `2` usage error.
@@ -130,18 +124,21 @@ automatically.
 
 ```
 footgun/
-├── .claude-plugin/plugin.json   # manifest
-├── commands/footgun.md          # /footgun orchestrator
-├── agents/                      # 5 stage reviewers + aggregator
-├── hooks/hooks.json             # commit reminder
-├── scripts/js-review-scope.sh   # scope + annotation
-└── test/                        # bash test suites + fixtures
+├── .claude-plugin/marketplace.json   # marketplace manifest
+├── README.md  LICENSE
+├── test/                             # bash test suites + fixtures
+└── plugin/                           # the installable plugin payload
+    ├── .claude-plugin/plugin.json    # plugin manifest
+    ├── commands/footgun.md           # /footgun orchestrator
+    ├── agents/                       # 5 stage reviewers + aggregator
+    ├── hooks/hooks.json              # commit reminder
+    └── scripts/js-review-scope.sh    # scope + annotation
 ```
 
 ## Tests
 
 ```bash
-cd ~/.claude/skills/footgun
+cd footgun
 bash test/run-scope-tests.sh
 bash test/run-edge-tests.sh
 bash test/run-annotate-tests.sh

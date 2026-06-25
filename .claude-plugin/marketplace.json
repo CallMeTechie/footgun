@@ -1,0 +1,16 @@
+{
+  "name": "footgun",
+  "description": "Multi-stage, JavaScript-specific code-review chain for Claude Code.",
+  "owner": {
+    "name": "CallMeTechie",
+    "url": "https://github.com/CallMeTechie"
+  },
+  "plugins": [
+    {
+      "name": "footgun",
+      "source": "./plugin",
+      "version": "0.1.0",
+      "description": "Multi-stage, JavaScript-specific code-review chain: a tooling gate (ESLint/Prettier/tsc), five parallel read-only reviewers (correctness, async, security, performance, maintainability), and an aggregator that dedupes, reconciles severities and emits a BLOCK / APPROVE WITH NOTES verdict. Read-only; runs only when invoked."
+    }
+  ]
+}

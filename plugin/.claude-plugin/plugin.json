@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "footgun",
+  "version": "0.1.0",
+  "description": "Footgun — mehrstufige, JavaScript-spezifische Code-Review-Kette (Tooling-Gate, 5 parallele Reviewer, Aggregator mit Verdict).",
+  "author": {
+    "name": "CallMeTechie",
+    "email": "34693633+CallMeTechie@users.noreply.github.com",
+    "url": "https://github.com/CallMeTechie"
+  },
+  "homepage": "https://github.com/CallMeTechie/footgun",
+  "repository": "https://github.com/CallMeTechie/footgun",
+  "license": "Apache-2.0",
+  "keywords": ["code-review", "javascript", "typescript", "eslint", "quality", "static-analysis", "review"]
+}

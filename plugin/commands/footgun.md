@@ -5,8 +5,7 @@ argument-hint: "[pfad…] [--include-generated]"
 
 Du orchestrierst die **js-review-chain**. Dies ist eine harte, nummerierte
 Prozedur — folge ihr Schritt für Schritt. Das Scope-Script liegt unter
-`${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh` (Fallback-Pfad:
-`~/.claude/skills/footgun/scripts/js-review-scope.sh`).
+`${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh`.
 
 Argumente des Aufrufs: `$ARGUMENTS`
 

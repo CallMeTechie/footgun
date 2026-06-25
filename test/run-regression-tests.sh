@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Regressions from final whole-branch review (#1 NUL split, #2 staged diff)
 set -u
-SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/scripts/js-review-scope.sh"
+SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/plugin/scripts/js-review-scope.sh"
 
 # #1: path with whitespace must be ONE NUL record, not two
 t1="$(mktemp -d)"

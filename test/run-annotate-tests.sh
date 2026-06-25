@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Tests for js-review-scope.sh --annotate
 set -u
-SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/scripts/js-review-scope.sh"
+SCRIPT="$(cd "$(dirname "$0")/.." && pwd)/plugin/scripts/js-review-scope.sh"
 
 tmp="$(mktemp -d)"
 ( cd "$tmp"; git init -q; git config user.email t@t; git config user.name t
