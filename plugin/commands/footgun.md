@@ -12,12 +12,16 @@ Argumente des Aufrufs: `$ARGUMENTS`
 **Vorverarbeitung `--level`:** Bevor du das Scope-Script aufrufst, entferne ein
 etwaiges `--level <wert>` aus `$ARGUMENTS` und merke dir den `<wert>` (gültig:
 `blocker|major|minor|nit`; Default `nit` = alles anzeigen). Das Scope-Script
-kennt dieses Flag **nicht** und würde es mit Usage-Fehler ablehnen — gib ihm in
-Schritt 1 und 2 nur die restlichen Argumente (Pfade, `--include-generated`).
+kennt dieses Flag **nicht** und würde es mit Usage-Fehler ablehnen. Bilde daher
+die **bereinigten Argumente** = `$ARGUMENTS` ohne `--level <wert>` (also nur Pfade
+und `--include-generated`) und übergib in Schritt 1 ausschließlich diese.
+(Schritt 2 nutzt ohnehin nur einzelne Dateipfade, kein `$ARGUMENTS`.)
 Den gemerkten `--level`-Wert reichst du in Schritt 6 an den Aggregator weiter.
 
 ## 1. Scope ermitteln
-Führe aus: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --list $ARGUMENTS`
+Führe aus — mit den **bereinigten Argumenten** aus der Vorverarbeitung (NICHT dem
+rohen `$ARGUMENTS`, das noch ein `--level` enthalten könnte):
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --list <bereinigte argumente>`
 - **Exit 3** (oder leere Liste): gib eine freundliche Meldung aus
   („Keine geänderten JS-Dateien gefunden. Nutze `/js-review <pfad>` für eine
   gezielte Prüfung.") und **STOPP** — keine weiteren Schritte.
