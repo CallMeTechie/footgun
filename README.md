@@ -12,6 +12,7 @@ reviewers run only if the code clears the gate.
 /footgun                       # review the changed JS files (git diff)
 /footgun src/server.js         # review specific files in full
 /footgun --include-generated   # don't skip dist/, *.min.js, etc.
+/footgun --level major         # show only blocker+major (verdict unaffected)
 ```
 
 ## Why
@@ -148,6 +149,21 @@ bash test/run-regression-tests.sh
 The `test/fixtures/` pair doubles as a quality check: `dirty.js` (deliberate
 footguns → expect BLOCK) and `clean.js` (looks risky, is correct → expect
 APPROVE WITH NOTES).
+
+## Benchmark
+
+`/footgun-bench` measures review quality against the fixtures under
+`test/fixtures/`:
+
+- **`dirty.js`** (Recall): contains one clear footgun per category —
+  measures how many are found.
+- **`clean.js`** (False-Positive check): deliberately "looks dangerous",
+  but correct code — nothing should be reported here.
+
+The scorer `test/bench/score.sh` is deterministic and verifiable in CI via
+`bash test/run-bench-tests.sh` (or `score.sh --self-test`). The
+`/footgun-bench` run itself is LLM-based and therefore non-deterministic —
+intended for local quality observation, not as a CI gate.
 
 ## License
 

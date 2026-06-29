@@ -44,6 +44,15 @@ einzigen Bericht. Arbeite **genau in dieser Reihenfolge**:
    `Datei:Zeile | Severity | Stage | Issue | Fix`. Eine Zeile pro
    dedupliziertem Befund. Gibt es keine Befunde: schreibe `_Keine Befunde._`.
 
+   **Level-Filter (nur Anzeige).** Du erhältst im Prompt einen `--level`-Wert
+   (`blocker|major|minor|nit`, Default `nit`). Zeige in der Tabelle **nur**
+   Befunde mit Severity **≥** dieser Schwelle (`blocker > major > minor > nit`;
+   `nit` = alles). **Wichtig:** Dieser Filter betrifft **ausschließlich die
+   Tabelle**. Das Verdict (Schritt 7) berechnest du **immer aus der vollständigen,
+   ungefilterten** Befundmenge — sonst würde z.B. `--level blocker` fälschlich
+   „sauber" suggerieren, obwohl `major`-Befunde existieren. Werden durch den
+   Filter alle Zeilen entfernt, schreibe `_Keine Befunde ≥ <level>._`.
+
 7. **Verdict.** Abschließende Zeile:
    - `**BLOCK**` wenn mindestens ein **verifizierter** `blocker` existiert.
    - sonst `**APPROVE WITH NOTES**`.

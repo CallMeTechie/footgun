@@ -26,3 +26,15 @@ export async function migrate(steps) {
     await step.run(); // bewusst seriell: jeder Schritt hängt vom vorigen ab
   }
 }
+
+// Handgerollte Schleife bewusst: case-insensitive Dedup unter Beibehaltung des
+// ersten Vorkommens — das leistet [...new Set()] nicht.
+export function uniqueCaseInsensitive(arr) {
+  const seen = new Set();
+  const out = [];
+  for (const x of arr) {
+    const key = x.toLowerCase();
+    if (!seen.has(key)) { seen.add(key); out.push(x); }
+  }
+  return out;
+}

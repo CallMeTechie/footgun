@@ -1,6 +1,6 @@
 ---
 description: Mehrstufige JS-Review der geänderten Dateien (oder übergebener Pfade) — Tooling-Gate, 5 parallele Reviewer, Aggregator mit Verdict.
-argument-hint: "[pfad…] [--include-generated]"
+argument-hint: "[pfad…] [--include-generated] [--level blocker|major|minor|nit]"
 ---
 
 Du orchestrierst die **js-review-chain**. Dies ist eine harte, nummerierte
@@ -9,8 +9,19 @@ Prozedur — folge ihr Schritt für Schritt. Das Scope-Script liegt unter
 
 Argumente des Aufrufs: `$ARGUMENTS`
 
+**Vorverarbeitung `--level`:** Bevor du das Scope-Script aufrufst, entferne ein
+etwaiges `--level <wert>` aus `$ARGUMENTS` und merke dir den `<wert>` (gültig:
+`blocker|major|minor|nit`; Default `nit` = alles anzeigen). Das Scope-Script
+kennt dieses Flag **nicht** und würde es mit Usage-Fehler ablehnen. Bilde daher
+die **bereinigten Argumente** = `$ARGUMENTS` ohne `--level <wert>` (also nur Pfade
+und `--include-generated`) und übergib in Schritt 1 ausschließlich diese.
+(Schritt 2 nutzt ohnehin nur einzelne Dateipfade, kein `$ARGUMENTS`.)
+Den gemerkten `--level`-Wert reichst du in Schritt 6 an den Aggregator weiter.
+
 ## 1. Scope ermitteln
-Führe aus: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --list $ARGUMENTS`
+Führe aus — mit den **bereinigten Argumenten** aus der Vorverarbeitung (NICHT dem
+rohen `$ARGUMENTS`, das noch ein `--level` enthalten könnte):
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --list <bereinigte argumente>`
 - **Exit 3** (oder leere Liste): gib eine freundliche Meldung aus
   („Keine geänderten JS-Dateien gefunden. Nutze `/js-review <pfad>` für eine
   gezielte Prüfung.") und **STOPP** — keine weiteren Schritte.
@@ -60,8 +71,8 @@ tsc-Kontext aus Schritt 4 (falls vorhanden) anhängen.
 Jeder liefert ein JSON-Objekt `{ "stage": …, "findings": [...] }` zurück.
 
 ## 6. Aggregat
-Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten
-und (b) den annotierten Inhalten (für die Blocker-Gegenprüfung).
+Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten,
+(b) den annotierten Inhalten (für die Blocker-Gegenprüfung) und (c) dem gemerkten `--level`-Wert (Default `nit`).
 
 ## 7. Ausgabe
 Gib den Bericht des Aggregators (Markdown-Tabelle + Verdict-Zeile) unverändert an
