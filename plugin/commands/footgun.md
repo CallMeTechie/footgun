@@ -1,6 +1,6 @@
 ---
 description: Mehrstufige JS-Review der geänderten Dateien (oder übergebener Pfade) — Tooling-Gate, 5 parallele Reviewer, Aggregator mit Verdict.
-argument-hint: "[pfad…] [--include-generated]"
+argument-hint: "[pfad…] [--include-generated] [--level blocker|major|minor|nit]"
 ---
 
 Du orchestrierst die **js-review-chain**. Dies ist eine harte, nummerierte
@@ -8,6 +8,13 @@ Prozedur — folge ihr Schritt für Schritt. Das Scope-Script liegt unter
 `${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh`.
 
 Argumente des Aufrufs: `$ARGUMENTS`
+
+**Vorverarbeitung `--level`:** Bevor du das Scope-Script aufrufst, entferne ein
+etwaiges `--level <wert>` aus `$ARGUMENTS` und merke dir den `<wert>` (gültig:
+`blocker|major|minor|nit`; Default `nit` = alles anzeigen). Das Scope-Script
+kennt dieses Flag **nicht** und würde es mit Usage-Fehler ablehnen — gib ihm in
+Schritt 1 und 2 nur die restlichen Argumente (Pfade, `--include-generated`).
+Den gemerkten `--level`-Wert reichst du in Schritt 6 an den Aggregator weiter.
 
 ## 1. Scope ermitteln
 Führe aus: `bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --list $ARGUMENTS`
@@ -60,8 +67,8 @@ tsc-Kontext aus Schritt 4 (falls vorhanden) anhängen.
 Jeder liefert ein JSON-Objekt `{ "stage": …, "findings": [...] }` zurück.
 
 ## 6. Aggregat
-Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten
-und (b) den annotierten Inhalten (für die Blocker-Gegenprüfung).
+Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten,
+(b) den annotierten Inhalten (für die Blocker-Gegenprüfung) und (c) dem gemerkten `--level`-Wert (Default `nit`).
 
 ## 7. Ausgabe
 Gib den Bericht des Aggregators (Markdown-Tabelle + Verdict-Zeile) unverändert an
