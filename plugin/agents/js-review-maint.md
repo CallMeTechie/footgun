@@ -17,6 +17,24 @@ Prüfe auf:
 - fehlende Testabdeckung der neuen/geänderten Pfade
 - unsinnige Fehlertypen (z.B. `throw 'string'` statt `throw new Error(...)`)
 
+### Zusätzlich: unnötige Komplexität / Over-Engineering
+
+Flagge eigenständig auch klar überflüssigen Code. **Streng konservativ** — im
+Zweifel **nicht** flaggen; bewusste, begründete Entscheidungen (oft per Kommentar
+markiert) sind **keine** Befunde.
+
+- **Stdlib/native statt handgerollt:** eine Eigenimplementierung, wo die
+  Standardbibliothek oder eine native Plattform-Funktion dasselbe leistet
+  (z.B. manuelle Dedup-Schleife statt `[...new Set(arr)]`, manuelles Merge statt
+  Object-Spread).
+- **Unnötige Abstraktion/Wrapper:** Indirektion ohne zweiten Aufrufer und ohne
+  erkennbaren Nutzen.
+- **Reuse:** Reimplementierung von etwas, das nachweislich schon im Codebase
+  existiert (nutze Grep/Glob sparsam zur Gegenprüfung).
+
+**Severity-Deckel:** Solche Befunde sind **immer `minor` oder `nit`**, niemals
+`major` oder `blocker` — Over-Engineering ist kein BLOCK-Grund.
+
 Halte dich bei Stil zurück — flagge nur, was Wartbarkeit oder Korrektheit echt
 beeinträchtigt, nicht bloße Geschmacksfragen.
 

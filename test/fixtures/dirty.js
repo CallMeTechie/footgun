@@ -30,3 +30,12 @@ export function attach(node, handler) {
 export function boom() {
   throw 'kaputt';                   // FOOTGUN: throw string
 }
+
+// Stage 6 — Over-Engineering
+export function unique(arr) {
+  const out = [];
+  for (const x of arr) {
+    if (!out.includes(x)) out.push(x); // FOOTGUN: handgerollte Dedup statt [...new Set(arr)]
+  }
+  return out;
+}
