@@ -32,10 +32,10 @@ export function boom() {
 }
 
 // Stage 6 — Over-Engineering
-export function unique(arr) {
+export function unique(arr) { // FOOTGUN: handgerollte O(n²)-Dedup statt [...new Set(arr)]
   const out = [];
   for (const x of arr) {
-    if (!out.includes(x)) out.push(x); // FOOTGUN: handgerollte Dedup statt [...new Set(arr)]
+    if (!out.includes(x)) out.push(x);
   }
   return out;
 }
