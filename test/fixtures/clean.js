@@ -10,8 +10,11 @@ export function label(name) {
   return name || 'Unbenannt'; // leerer String soll auch 'Unbenannt' ergeben
 }
 
-// Mutierende Methode auf lokaler Kopie (kein Seiteneffekt)
-export function sorted(arr) {
+// Köder: .sort() mutiert das Array normalerweise IN-PLACE (klassischer
+// Seiteneffekt-Footgun) — hier bewusst auf einer flachen Kopie `[...arr]`, das
+// Argument bleibt unangetastet. Der Name macht den numerischen Scope explizit,
+// daher ist der Komparator `a - b` korrekt und kein Fehlerfall.
+export function sortedNumbers(arr) {
   return [...arr].sort((a, b) => a - b);
 }
 
