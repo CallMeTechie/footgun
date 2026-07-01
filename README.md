@@ -65,6 +65,24 @@ project already has them.
 | 4. Performance | `footgun:js-review-perf` | memory leaks (listeners/timers/detached DOM), event-loop blocking, re-renders/memoization, stream backpressure |
 | 5. Maintainability | `footgun:js-review-maint` | readability, naming, function size, test coverage of changed paths, sensible error types (no `throw 'string'`), over-engineering (hand-rolled code where stdlib/native fits — capped at `minor`/`nit`) |
 
+#### Over-engineering checks
+
+The maintainability reviewer also flags **needless complexity** — conservatively,
+and it can never block a merge:
+
+- **Stdlib/native over hand-rolled** — a custom implementation where the standard
+  library or a native platform feature already does the job (e.g. a hand-rolled
+  dedup loop instead of `[...new Set(arr)]`, a manual merge instead of object spread).
+- **Needless abstraction** — indirection or wrappers with no second caller and no
+  discernible benefit.
+- **Reuse** — reimplementing something that already exists in the codebase.
+
+**Impact:** these findings are always `minor` or `nit` — never `major`/`blocker` —
+so they never trigger BLOCK, and `--level major` (or stricter) hides them entirely.
+The reviewer stays conservative: deliberate, justified choices — often marked by a
+comment — are left alone (e.g. a hand-rolled loop that does something `[...new Set()]`
+cannot). That restraint is exactly what the `clean.js` false-positive fixture checks.
+
 Each reviewer is read-only and returns only a JSON object:
 
 ```json
