@@ -63,7 +63,7 @@ project already has them.
 | 2. Async | `footgun:js-review-async` | missing `await`, fire-and-forget promises, serial-vs-`Promise.all`, race conditions, missing cancellation, swallowed `.catch` |
 | 3. Security | `footgun:js-review-security` | XSS (`innerHTML`/`eval`), prototype pollution, ReDoS, secrets, path traversal, plus a non-blocking `npm audit` sub-check |
 | 4. Performance | `footgun:js-review-perf` | memory leaks (listeners/timers/detached DOM), event-loop blocking, re-renders/memoization, stream backpressure |
-| 5. Maintainability | `footgun:js-review-maint` | readability, naming, function size, test coverage of changed paths, sensible error types (no `throw 'string'`) |
+| 5. Maintainability | `footgun:js-review-maint` | readability, naming, function size, test coverage of changed paths, sensible error types (no `throw 'string'`), over-engineering (hand-rolled code where stdlib/native fits — capped at `minor`/`nit`) |
 
 Each reviewer is read-only and returns only a JSON object:
 
@@ -128,9 +128,10 @@ footgun/
 ├── .claude-plugin/marketplace.json   # marketplace manifest
 ├── README.md  LICENSE
 ├── test/                             # bash test suites + fixtures
+│   └── bench/                        # eval scorer (score.sh) + golden expectations
 └── plugin/                           # the installable plugin payload
     ├── .claude-plugin/plugin.json    # plugin manifest
-    ├── commands/footgun.md           # /footgun orchestrator
+    ├── commands/                     # /footgun orchestrator + /footgun-bench
     ├── agents/                       # 5 stage reviewers + aggregator
     ├── hooks/hooks.json              # commit reminder
     └── scripts/js-review-scope.sh    # scope + annotation
@@ -144,6 +145,7 @@ bash test/run-scope-tests.sh
 bash test/run-edge-tests.sh
 bash test/run-annotate-tests.sh
 bash test/run-regression-tests.sh
+bash test/run-bench-tests.sh
 ```
 
 The `test/fixtures/` pair doubles as a quality check: `dirty.js` (deliberate
