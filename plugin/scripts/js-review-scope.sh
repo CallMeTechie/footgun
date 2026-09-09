@@ -5,6 +5,8 @@
 #   --list [--include-generated] [path...]    NUL-separated file list on stdout
 #   --annotate [--whole-file] <file>          file content with absolute line
 #                                             numbers; changed lines marked ">> "
+#   --stages [--all]                          annotated content on stdin ->
+#                                             TSV "<stage>\t<run|skip>\t<reason>"
 #
 # Exit codes: 0 = ok, 3 = nothing to review / no such file, 2 = usage error.
 set -u
@@ -109,12 +111,77 @@ cmd_annotate() {
   ' "$file"
 }
 
+# Which reviewer stages the content can actually yield findings for.
+#
+# correctness and maint run unconditionally: any JS line can be wrong, and any
+# JS line can be unreadable. The other three are gated on markers, because a
+# diff without a single asynchronous construct cannot produce an async finding,
+# and paying a subagent to confirm that is the cost this gate removes.
+#
+# The marker sets are deliberately generous — they err towards running a stage.
+# A gate that is too clever is worse than no gate: the reviewer that would have
+# caught the bug never starts, and nothing in the output says so.
+ASYNC_RE='async|await|Promise|\.then\(|\.catch\(|\.finally\(|setTimeout|setInterval|setImmediate|queueMicrotask|nextTick|for await|asyncIterator|yield|callback|addEventListener|removeEventListener|\.on\(|\.once\(|\.emit\(|\.subscribe\(|EventEmitter|Worker|postMessage|requestAnimationFrame|requestIdleCallback|AbortController|\.race\(|\.allSettled\(|\.all\(|mutex|lock|race|defer'
+SECURITY_RE='fetch\(|XMLHttpRequest|axios|\$\.ajax|innerHTML|outerHTML|dangerouslySetInnerHTML|insertAdjacentHTML|document\.write|eval\(|new Function|setAttribute|execSync|execFile|spawn|child_process|process\.env|localStorage|sessionStorage|indexedDB|document\.cookie|token|passw|secret|credential|apiKey|api_key|jwt|bearer|crypto|hmac|hash|encrypt|decrypt|sanitiz|escapeHtml|querySelector|SELECT |INSERT |UPDATE |DELETE |\.query\(|\.exec\(|knex|sequelize|mongo|redis|path\.join|path\.resolve|readFile|writeFile|unlink|createReadStream|fs\.|req\.|res\.|request\.|response\.|header|cors|origin|redirect|location\.|window\.open|href|postMessage|\.\./|chmod|sudo'
+PERF_RE='for *\(|for *await|while *\(|do *\{|\.map\(|\.filter\(|\.reduce\(|\.forEach\(|\.find\(|\.findIndex\(|\.some\(|\.every\(|\.sort\(|\.concat\(|\.splice\(|\.slice\(|\.flat|\.join\(|JSON\.parse|JSON\.stringify|structuredClone|new Array|Array\.from|Object\.keys|Object\.values|Object\.entries|Object\.assign|spread|\.\.\.|RegExp|\.match\(|\.matchAll\(|\.replace\(|querySelectorAll|getElementsBy|createElement|appendChild|insertBefore|innerHTML|useMemo|useCallback|useEffect|render|reflow|offsetWidth|getBoundingClientRect|cache|memo|debounce|throttle'
+
+# stage_reason <label> <regex> <content>
+# Emits the TSV row and keeps the matched marker in the reason, so a reader can
+# tell a deliberate hit from a lucky substring without re-running the grep.
+stage_row() {
+  local stage="$1" re="$2" content="$3" hit
+  hit="$(printf '%s\n' "$content" | grep -oE "$re" | head -1)"
+  if [ -n "$hit" ]; then
+    printf '%s\trun\tmatched: %s\n' "$stage" "$hit"
+  else
+    printf '%s\tskip\tno %s marker in the reviewed lines\n' "$stage" "$stage"
+  fi
+}
+
+cmd_stages() {
+  local all=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --all) all=1 ;;
+      -*) echo "unknown flag: $1" >&2; return 2 ;;
+      *) echo "stages: unexpected argument: $1" >&2; return 2 ;;
+    esac
+    shift
+  done
+
+  local content changed
+  content="$(cat)"
+
+  # Only the lines under review decide. In diff mode that is the ">> " set; a
+  # marker in untouched context says nothing about the change being reviewed.
+  # With no marked lines at all (whole-file mode, or a repo without HEAD) the
+  # whole content counts — narrowing there would be a guess.
+  changed="$(printf '%s\n' "$content" | grep -F '>> ' || true)"
+  [ -n "$changed" ] || changed="$content"
+
+  if [ "$all" -eq 1 ]; then
+    local st
+    for st in correctness async security perf maint; do
+      printf '%s\trun\t--all was given\n' "$st"
+    done
+    return 0
+  fi
+
+  printf 'correctness\trun\talways: any changed line can be wrong\n'
+  stage_row async    "$ASYNC_RE"    "$changed"
+  stage_row security "$SECURITY_RE" "$changed"
+  stage_row perf     "$PERF_RE"     "$changed"
+  printf 'maint\trun\talways: any changed line can be unreadable\n'
+  return 0
+}
+
 main() {
-  [ $# -eq 0 ] && { echo "usage: js-review-scope.sh --list|--annotate ..." >&2; return 2; }
+  [ $# -eq 0 ] && { echo "usage: js-review-scope.sh --list|--annotate|--stages ..." >&2; return 2; }
   local mode="$1"; shift
   case "$mode" in
     --list) cmd_list "$@" ;;
     --annotate) cmd_annotate "$@" ;;
+    --stages) cmd_stages "$@" ;;
     *) echo "unknown mode: $mode" >&2; return 2 ;;
   esac
 }
