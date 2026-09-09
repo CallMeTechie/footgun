@@ -1,6 +1,6 @@
 ---
 description: Mehrstufige JS-Review der geänderten Dateien (oder übergebener Pfade) — Tooling-Gate, 5 parallele Reviewer, Aggregator mit Verdict.
-argument-hint: "[pfad…] [--include-generated] [--level blocker|major|minor|nit]"
+argument-hint: "[pfad…] [--include-generated] [--level blocker|major|minor|nit] [--all]"
 ---
 
 Du orchestrierst die **js-review-chain**. Dies ist eine harte, nummerierte
@@ -17,6 +17,12 @@ die **bereinigten Argumente** = `$ARGUMENTS` ohne `--level <wert>` (also nur Pfa
 und `--include-generated`) und übergib in Schritt 1 ausschließlich diese.
 (Schritt 2 nutzt ohnehin nur einzelne Dateipfade, kein `$ARGUMENTS`.)
 Den gemerkten `--level`-Wert reichst du in Schritt 6 an den Aggregator weiter.
+
+**Vorverarbeitung `--all`:** Entferne ein etwaiges `--all` auf demselben Weg aus
+`$ARGUMENTS` und merke dir, ob es gesetzt war. Auch dieses Flag kennt das
+Scope-Script in `--list` **nicht** und würde mit Usage-Fehler abbrechen; es
+gehört ausschließlich an `--stages` in Schritt 5. Die **bereinigten Argumente**
+sind also `$ARGUMENTS` ohne `--level <wert>` und ohne `--all`.
 
 ## 1. Scope ermitteln
 Führe aus — mit den **bereinigten Argumenten** aus der Vorverarbeitung (NICHT dem
@@ -55,12 +61,25 @@ startest.
   nichts weitergeben).
 - Fehlt ein Tool / keine Config → „skipped (not configured)", weiter.
 
-## 5. Fan-out — fünf Reviewer parallel
-Dispatche in **einer einzigen Nachricht** fünf Subagents (damit sie parallel
-laufen) via Agent-Tool. Jeder bekommt: die annotierten Inhalte + die Dateipfade
-+ die Anweisung, ausschließlich seine Kategorie und nur `>> `-Zeilen zu prüfen.
-An `footgun:js-review-correctness` zusätzlich den gefilterten
-tsc-Kontext aus Schritt 4 (falls vorhanden) anhängen.
+## 5. Fan-out — die einschlägigen Reviewer parallel
+
+**Erst das Gate.** Leite die gesammelten annotierten Inhalte aus Schritt 2 in:
+`bash "${CLAUDE_PLUGIN_ROOT}/scripts/js-review-scope.sh" --stages` — plus `--all`,
+falls der Nutzer es übergeben hat. Du bekommst je Stufe eine Zeile
+`<stage>\t<run|skip>\t<begründung>`.
+
+`correctness` und `maint` laufen immer. `async`, `security` und `perf` laufen nur,
+wenn die geprüften Zeilen einen Marker ihrer Kategorie tragen — ein Diff ohne eine
+einzige asynchrone Konstruktion kann keinen async-Befund hervorbringen, und einen
+Subagenten dafür zu bezahlen, das zu bestätigen, ist genau die Kosten, die dieses
+Gate entfernt. Die Entscheidung ist deterministisch und liegt im Script; **triff
+sie nicht selbst** und überstimme sie nicht.
+
+**Dann der Dispatch.** Dispatche in **einer einzigen Nachricht** alle Subagents mit
+`run` (damit sie parallel laufen) via Agent-Tool. Jeder bekommt: die annotierten
+Inhalte + die Dateipfade + die Anweisung, ausschließlich seine Kategorie und nur
+`>> `-Zeilen zu prüfen. An `footgun:js-review-correctness` zusätzlich den
+gefilterten tsc-Kontext aus Schritt 4 (falls vorhanden) anhängen.
 
 - `footgun:js-review-correctness`
 - `footgun:js-review-async`
@@ -68,7 +87,9 @@ tsc-Kontext aus Schritt 4 (falls vorhanden) anhängen.
 - `footgun:js-review-perf`
 - `footgun:js-review-maint`
 
-Jeder liefert ein JSON-Objekt `{ "stage": …, "findings": [...] }` zurück.
+Jeder liefert ein JSON-Objekt `{ "stage": …, "findings": [...] }` zurück. Für eine
+übersprungene Stufe gibt es kein JSON — behandle sie als „nicht geprüft", **nie**
+als „keine Befunde". Merke dir die `skip`-Zeilen mitsamt Begründung für Schritt 7.
 
 ## 6. Aggregat
 Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten,
@@ -77,3 +98,10 @@ Dispatche `footgun:js-review-aggregator` mit (a) den fünf JSON-Objekten,
 ## 7. Ausgabe
 Gib den Bericht des Aggregators (Markdown-Tabelle + Verdict-Zeile) unverändert an
 den Nutzer aus.
+
+Wurde mindestens eine Stufe übersprungen, hänge **eine** Zeile an, die sie mitsamt
+Grund nennt, zum Beispiel:
+`Nicht geprüft: security (kein security-Marker in den geprüften Zeilen). Mit --all erzwingen.`
+
+Eine stille Auslassung wäre schlimmer als der gesparte Agent: Der Nutzer liest das
+Verdict sonst als „hat auch die Sicherheit geprüft", und genau das hat es nicht.

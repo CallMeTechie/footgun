@@ -45,15 +45,35 @@ project already has them.
 ## How it works
 
 ```
-/footgun [path…] [--include-generated]
+/footgun [path…] [--include-generated] [--all]
    │
    ├─ 1. Scope        list changed JS files (extension filter + generated-file exclude)
    ├─ 2. Annotate     emit each file with absolute line numbers; changed lines marked ">> "
    ├─ 3. Big-diff guard  (> 40 files / > 2000 lines → confirm first)
    ├─ 4. Gate         ESLint / Prettier fail-fast · tsc / npm audit non-blocking
-   ├─ 5. Fan-out      5 read-only reviewers in parallel
+   ├─ 5. Fan-out      gate the 5 stages on the reviewed lines, dispatch the applicable ones in parallel
    └─ 6. Aggregate    dedupe → reconcile severity → cross-check blockers → verdict
 ```
+
+### The fan-out gate
+
+Correctness and maintainability run on every review: any changed line can be wrong,
+and any changed line can be unreadable. Async, security and performance run only when
+the reviewed lines carry a marker of that category — a diff without a single
+asynchronous construct cannot produce an async finding, and paying a subagent to
+confirm that is what this removes. On a whole-file review or an unmarked diff nothing
+is narrowed, because there is nothing to narrow against.
+
+The decision is a grep in `plugin/scripts/js-review-scope.sh --stages`, not a
+judgement call by the orchestrator, and the marker sets deliberately err towards
+running a stage. A skipped stage is always named in the report with its reason —
+reading a verdict as "security was checked" when it was not would cost far more than
+the agent saves. `--all` forces all five.
+
+**Named residual risk:** a security or performance defect whose lines carry none of
+the markers goes unreviewed by that stage. Correctness and maintainability still see
+every line. `test/run-stages-tests.sh` guards the recall side against the bench
+fixture: `dirty.js` plants a finding per category and must arm all five stages.
 
 ### Review stages
 
